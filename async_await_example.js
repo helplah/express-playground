@@ -1,8 +1,11 @@
 const express = require("express");
 const app = express();
 
-const wrapAsync = fn => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(err => next(err));
+// Promise.resolve(getUserProfile(req, res, next)).catch(err => next(err))
+const wrapAsync = fn => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(err => next(err));
+  };
 };
 
 // this function simulates one asynchronous operation,
@@ -32,11 +35,11 @@ const loadBlogPostFromDB = postId => {
 const getBlogPost = async (req, res, next) => {
   const postId = req.params.postId;
   // note: this line below would throw error
-  const post = await loadBlogPostFromDB(postId);
+  const post = await loadBlogPostFromDB(postId).catch(e => next(e));
   res.return(post);
 };
 
-app.get("/posts/:postId", wrapAsync(getBlogPost));
+app.get("/posts/:postId", getBlogPost);
 
 app.use(function(err, req, res, next) {
   res.status(500);
